@@ -5,7 +5,7 @@ from numpy.linalg import inv
 from scipy import linalg
 
 
-def MyFirstAlgorithm(X,mode='cov',k=1, threshold=0.3): #if k is set to 0 then the number of eigenvectors will be automatically calculated
+def MyFirstAlgorithm(X,mode='cov',k=1, threshold=0.3): 
 	print('Now running conventional PCA through eigendecomposition of the covariance matrix...')
 	if mode == 'cov':
 		#Calculation of Covariance matrix
@@ -36,8 +36,6 @@ def PCA(Data, k=1, F=True, threshold=0.02):
 	X = Data - meanMatrix #centered	
 
 	U,S,V = np.linalg.svd(X, full_matrices=F) 
-	# a lot of eigenvalues will be zero in the practical, why?
-	#S is computed in descending order 
 	eigvecs=U.T[:k] #the first k vectors will be kept
 	W=eigvecs[:]
 	y=W.dot(Data)
@@ -94,7 +92,6 @@ def PPCA(Data, M=1, variance=True):
 				Ezzt = []
 				A = np.zeros((D,M)) #Starting with a zero matrix, to sum the first term of Wnew
 				
-#				EZ=Mi.dot(W.T).dot(X)
 
 				for x in X.T:
 					x = np.mat(x)
