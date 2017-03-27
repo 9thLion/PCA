@@ -5,7 +5,7 @@ from numpy.linalg import inv
 from scipy import linalg
 
 
-def MyFirstAlgorithm(X,mode='cov',k=0, threshold=0.3): #if k is set to 0 then the number of eigenvectors will be automatically calculated
+def MyFirstAlgorithm(X,mode='cov',k=1, threshold=0.3): #if k is set to 0 then the number of eigenvectors will be automatically calculated
 	print('Now running conventional PCA through eigendecomposition of the covariance matrix...')
 	if mode == 'cov':
 		#Calculation of Covariance matrix
@@ -19,45 +19,25 @@ def MyFirstAlgorithm(X,mode='cov',k=0, threshold=0.3): #if k is set to 0 then th
 		C = np.array(sum([np.mat(x-meanMatrix).T.dot(np.mat(x-meanMatrix)) for x in X.T]))
 	eigVals,eigVecs = linalg.eigh(C) #the eigenvalues are given in ascending order
 	index=eigVals.argsort()[::-1]  
-	eigVals=eigVals.tolist()
-	eigVals.sort(reverse=True) #change to descending order
-	v1 = eigVals[0] #the highest eigenvalue
-	if k==0:
-		k = 1 #initial value of eigenvectors to be kept
-		for Val in eigVals[1:]:
-			rdiff=(v1-Val)/v1
-			if rdiff<threshold: #checking the relative difference so as to
-				k+=1      		#not discard any non trivial eigenvectors
-				v1=Val         	#the user can change the threshold, it is default on 0.3
-			else:              
-				break           
 	eigvecs=eigVecs[:k,index] #the first k vectors will be kept
 	W=eigvecs[:]
 	y=W.dot(X)
 	return(y, eigVals)    
 
-def PCA(Data, k=0, F=True, threshold=0.03): 
+def PCA(Data, k=1, F=True, threshold=0.02): 
 	#Warning: This method is not to be used when the dimensions are more than the samples
 	print('Now running conventional PCA through singular value decomposition of the data...')
 	D = Data.shape[0]
+	N = Data.shape[1]
 	meanM = []
-	for line in Data.T:
+	for line in Data:
 		meanM.append([np.mean(line)])
-	meanMatrix = np.array([meanM]*D).squeeze()
+	meanMatrix = np.array([meanM]*N).squeeze().T
 	X = Data - meanMatrix #centered	
 
 	U,S,V = np.linalg.svd(X, full_matrices=F) 
-	print(S) # a lot of eigenvalues will be zero in the practical, why?
-	#S is computed in descending order
-	v1=S[0]
-	if k==0:
-		k = 1 #initial value of eigenvectors to be kept
-		for Val in S[1:]:
-			if (v1-Val)/v1<threshold: #checking the relative difference so as to
-				k+=1            	  #not discard any non trivial eigenvectors
-				v1=Val          								
-			else:              
-				break      
+	# a lot of eigenvalues will be zero in the practical, why?
+	#S is computed in descending order 
 	eigvecs=U.T[:k] #the first k vectors will be kept
 	W=eigvecs[:]
 	y=W.dot(Data)
@@ -65,25 +45,21 @@ def PCA(Data, k=0, F=True, threshold=0.03):
 	
 def PPCA(Data, M=1, variance=True): 
 	pie=np.pi
-	D = Data.shape[0] #number of dimensions
-	N = Data.shape[1] #number of samples, so Data has to be provided in the correct shape
-
+	D = Data.shape[0]
+	N = Data.shape[1]
 	meanM = []
-	for line in Data.T:
+	for line in Data:
 		meanM.append([np.mean(line)])
-	meanMatrix = np.array([meanM]*D).squeeze()
-	X = Data - meanMatrix #centered
+	meanMatrix = np.array([meanM]*N).squeeze().T
+	X = Data - meanMatrix #centered	
 
-	#SET ARBITRARY W#
-	mean = np.zeros(M)
-	var = np.identity(M)
-	W = np.random.multivariate_normal(mean,var,D) #DxM matrix
 
-	sigma = np.random.random()
-	metric = 0
-	counter=0
 	if variance==False: #Sigma is zero
 		print('Now running PPCA (sigma zero) on the data...')
+		#SET ARBITRARY W#
+		mean = np.zeros(M)
+		var = np.identity(M)
+		W = np.random.multivariate_normal(mean,var,D) #DxM matrix
 		while True:
 			Mi = inv(W.T.dot(W))  
 			O = Mi.dot(W.T).dot(X) #O is the expectation E[x] where x are the observed values
@@ -100,68 +76,84 @@ def PPCA(Data, M=1, variance=True):
 
 	if variance==True: #Sigma is not zero
 		print('Now running PPCA (sigma not zero) on the data...')
-		while True:
-			#In the following loops i will split the terms of W_new and sigma_new to separate variables to avoid a huge equation.
-			counter+=1
+		Runs=0
+		Wfinal=np.zeros((D,M))
+		def EM(X):
+			#SET ARBITRARY W#
+			W = np.random.rand(D,M)
+			#SET ARBITRARY Sigma#
+			sigma = np.random.random()
+			metric = 0
+			counter = 0
+			while True:
+				#In the following loops i will split the terms of W_new and sigma_new to separate variables to avoid a huge equation.
+				counter+=1
 
-			Mi = inv(W.T.dot(W) + sigma*np.identity(W.shape[1]))
-			Ez = []
-			Ezzt = []
-			A = np.zeros((D,M)) #Starting with a zero matrix, to sum the first term of Wnew
-			for x in X.T:
-				x = np.mat(x)
-				Ez_n = Mi.dot(W.T).dot(x.T)
-				Ezzt_n = sigma*Mi + Ez_n.dot(Ez_n.T)
-				Ezzt.append(Ezzt_n)
-				Ez.append(Ez_n)
-				A += x.T.dot(Ez_n.T)
+				Mi = inv(W.T.dot(W) + sigma*np.identity(W.shape[1]))
+				Ez = []
+				Ezzt = []
+				A = np.zeros((D,M)) #Starting with a zero matrix, to sum the first term of Wnew
+				
+#				EZ=Mi.dot(W.T).dot(X)
 
-			Ez = np.array(Ez) #a matrix with all the Expectation vectors, will only use it in metric
-			Ezzt = np.array(Ezzt) #Nx(MxM)
-			B = inv(sum(Ezzt)) #second term of Wnew
-			W_new = A.dot(B)
+				for x in X.T:
+					x = np.mat(x)
+					Ez_n = Mi.dot(W.T).dot(x.T)
+					Ezzt_n = sigma*Mi + Ez_n.dot(Ez_n.T)
+					Ezzt.append(Ezzt_n)
+					Ez.append(Ez_n)
+					A += x.T.dot(Ez_n.T)
 
-			values=[] 
-			for x in X.T:
-				x = np.mat(x)
-				Ez_n = Mi.dot(W.T).dot(x.T)
-				a = x.dot(x.T)
-				b = Ez_n.T.dot(W_new.T).dot(x.T)
-				Ezzt_n = sigma*Mi + Ez_n.dot(Ez_n.T)
-				c = np.trace(Ezzt_n.dot(W_new.T).dot(W_new))
-				values.append(float(a - b + c))
+				Ez = np.array(Ez) #a matrix with all the Expectation vectors, will only use it in metric
+				Ezzt = np.array(Ezzt) #Nx(MxM)
+				B = inv(sum(Ezzt)) #second term of Wnew
+				W_new = A.dot(B)
 
-			sigma_new = (1/N*D)*sum(values)
+				values=[] 
+				for x in X.T:
+					x = np.mat(x)
+					Ez_n = Mi.dot(W.T).dot(x.T)
+					a = x.dot(x.T)
+					b = Ez_n.T.dot(W_new.T).dot(x.T)
+					Ezzt_n = sigma*Mi + Ez_n.dot(Ez_n.T)
+					c = np.trace(Ezzt_n.dot(W_new.T).dot(W_new))
+					values.append(float(a - 2*b + c))
 
-			#We will use the joint p(x,z) expectation given the parameters as convergence metric
-			#In each run we will compare with the previous
-			#In the first run we have defined the old metric as 0 to skip right ahead.
-			a = (D/2)*np.log(2*pie*sigma_new)
-			b = []
-			c = []
-			d = []
-			e = []
-			for x in X.T:
-				x = np.mat(x)
-				Ez_n = Mi.dot(W.T).dot(x.T)
-				Ezzt_n = sigma*Mi + Ez_n.dot(Ez_n.T)
-				b.append(float(1/2)*np.trace(Ezzt_n))
-				c.append(float((1/2*sigma_new)*(x.dot(x.T))))
-				d.append(float((1/sigma_new)*Ez_n.T.dot(W_new.T).dot(x.T)))
-				e.append(float((1/2*sigma_new)*np.trace(Ezzt_n.dot(W_new.T).dot(W_new))))
+				sigma_new = (1/N*D)*sum(values)
 
-			metric_new = -sum(a+b+c-d+e)
-			print('Run number',str(counter),'expectation metric:',metric_new)
+				#We will use the joint p(x,z) expectation given the parameters as convergence metric
+				#In each run we will compare with the previous
+				#In the first run we have defined the old metric as 0 to skip right ahead.
+				a = (D/2)*np.log(2*pie*sigma_new)
+				b = []
+				c = []
+				d = []
+				e = []
+				for x in X.T:
+					x = np.mat(x)
+					Ez_n = Mi.dot(W.T).dot(x.T)
+					Ezzt_n = sigma*Mi + Ez_n.dot(Ez_n.T)
+					b.append(float(1/2)*np.trace(Ezzt_n))
+					c.append(float((1/2*sigma_new)*(x.dot(x.T))))
+					d.append(float((1/sigma_new)*Ez_n.T.dot(W_new.T).dot(x.T)))
+					e.append(float((1/2*sigma_new)*np.trace(Ezzt_n.dot(W_new.T).dot(W_new))))
 
-			if abs(metric_new-metric)<0.00000001: #10^-8
-				print('Converged at run', counter, '!')
-				U,S,V = np.linalg.svd(W_new, full_matrices=False)
-				Output = U.T.dot(Data)
-				break
-			else:
-				W = W_new
-				sigma = sigma_new
-				metric = metric_new
+				metric_new = -sum(a+b+c-d+e)
+				print('Maximization number',str(counter),'expectation metric:',metric_new)
+
+				if abs(metric_new-metric)<0.00000001: #10^-8
+					print('Converged at ', counter, '!')
+					break
+				else:
+					W = W_new
+					sigma = sigma_new
+					metric = metric_new
+			return W_new
+		for x in range(10):
+			Wfinal+=EM(X)
+		Wfinal=Wfinal/10
+		U,S,V=np.linalg.svd(Wfinal, full_matrices=False)
+		Output=U.T.dot(Data)
 		return(Output)
 	
 
