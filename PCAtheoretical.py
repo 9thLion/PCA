@@ -27,20 +27,20 @@ plt.title('before PCA')
 plt.scatter(Big.T[0], Big.T[1], c='c')
 plt.scatter(Small.T[0], Small.T[1], c='r') 
 
-Y1cov=pac.MyFirstAlgorithm(BS)[0].T
+Y1cov=pac.MyFirstAlgorithm(BS,k=2)[0].T
 plt.subplot(3,3,2)
 plt.title('after linear PCA (Eigendecomposition)')
 
-plt.scatter(Y1cov[:500].T[0], np.zeros((500,1)), c='c') #The output is split in half, the last 500 are from the big circle
-plt.scatter(Y1cov[500:].T[0], np.zeros((500,1)), c='r') #while the first 500 are from the small circle
+plt.scatter(Y1cov[:500].T[0], Y1cov[:500].T[1], c='c') #The output is split in half, the last 500 are from the big circle
+plt.scatter(Y1cov[500:].T[0], Y1cov[500:].T[1], c='r') #while the first 500 are from the small circle
 
-Y1svd=pac.PCA(BS)[0].T
+Y1svd=pac.PCA(BS,k=2)[0].T
 print('Shape of output matrix:', Y1svd.shape)
 plt.subplot(3,3,3)
 plt.title('after linear PCA (SVD)')
 
-plt.scatter(Y1svd[:500].T[0], np.zeros((500,1)), c='c') 
-plt.scatter(Y1svd[500:].T[0], np.zeros((500,1)), c='r') 
+plt.scatter(Y1svd[:500].T[0], Y1svd[:500].T[1], c='c') 
+plt.scatter(Y1svd[500:].T[0], Y1svd[500:].T[1], c='r') 
 '''
 The two eigenvectors are orthogonal because the covariance matrix
 is symmetric and since they represent the line of maximum variance

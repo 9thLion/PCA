@@ -10,9 +10,10 @@ os.system('wget ftp://ftp.ncbi.nlm.nih.gov/geo/datasets/GDS6nnn/GDS6248/soft/GDS
 os.system('gunzip GDS6248.soft.gz')
 os.system('tail -n +141 GDS6248.soft > GDS6248.softer') #getting rid of the redundant lines
 os.system('rm GDS6248.soft')
-os.system('head -n -1 GDS6248.softer > GDS6248.soft') 
+os.system('head -n -1 GDS6248.softer > GDS6248.soft') #one last redundant line
 os.system('rm GDS6248.softer')
 
+#In the following loop I'm keeping the float values while skipping the strings by setting the ValueError exception
 temp = []
 with open('GDS6248.soft') as f:
 	for l in f:
@@ -25,7 +26,7 @@ with open('GDS6248.soft') as f:
 		temp.append(temp2)
 
 X=np.array(temp)
-Color = ['m' for x in range(3)] + ['c' for x in range(24)] + ['r' for x in range(24)]
+Color = ['m' for x in range(3)] + ['c' for x in range(24)] + ['r' for x in range(24)] #Color scheme for the samples
 
 plt.figure()
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=0.5)

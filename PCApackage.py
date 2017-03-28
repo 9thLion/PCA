@@ -18,14 +18,13 @@ def MyFirstAlgorithm(X,mode='cov',k=1, threshold=0.3):
 		meanMatrix=np.array(meanM)
 		C = np.array(sum([np.mat(x-meanMatrix).T.dot(np.mat(x-meanMatrix)) for x in X.T]))
 	eigVals,eigVecs = linalg.eigh(C) #the eigenvalues are given in ascending order
-	index=eigVals.argsort()[::-1]  
+	index=eigVals.argsort()[::-1]  #finding the indexes for descending order
 	eigvecs=eigVecs[:k,index] #the first k vectors will be kept
 	W=eigvecs[:]
 	y=W.dot(X)
 	return(y, eigVals)    
 
 def PCA(Data, k=1, F=True, threshold=0.02): 
-	#Warning: This method is not to be used when the dimensions are more than the samples
 	print('Now running conventional PCA through singular value decomposition of the data...')
 	D = Data.shape[0]
 	N = Data.shape[1]
@@ -98,10 +97,8 @@ def PPCA(Data, M=1, variance=True):
 					Ez_n = Mi.dot(W.T).dot(x.T)
 					Ezzt_n = sigma*Mi + Ez_n.dot(Ez_n.T)
 					Ezzt.append(Ezzt_n)
-					Ez.append(Ez_n)
 					A += x.T.dot(Ez_n.T)
 
-				Ez = np.array(Ez) #a matrix with all the Expectation vectors, will only use it in metric
 				Ezzt = np.array(Ezzt) #Nx(MxM)
 				B = inv(sum(Ezzt)) #second term of Wnew
 				W_new = A.dot(B)
@@ -146,9 +143,11 @@ def PPCA(Data, M=1, variance=True):
 					sigma = sigma_new
 					metric = metric_new
 			return W_new
-		for x in range(10):
+
+		EMruns=10
+		for x in range(EMruns):
 			Wfinal+=EM(X)
-		Wfinal=Wfinal/10
+		Wfinal=Wfinal/EMruns #Running EM multiple times and then keeping the mean Matrix of all the outputs
 		U,S,V=np.linalg.svd(Wfinal, full_matrices=False)
 		Output=U.T.dot(Data)
 		return(Output)
@@ -187,8 +186,8 @@ def KPCA(X, gamma=3, dims=1, mode='gaussian'):
 	# Centering the symmetric NxN kernel matrix.
 	N = kernel.shape[0]
 	one_n = np.ones((N,N)) / N
-	kernel = kernel - one_n.dot(kernel) - kernel.dot(one_n) + one_n.dot(kernel).dot(one_n)
+	kernel = kernel - one_n.dot(kernel) - kernel.dot(one_n) + one_n.dot(kernel).dot(one_n) #centering
 
 	eigVals, eigVecs = linalg.eigh(kernel) #the eigvecs are sorted in ascending eigenvalue order.
-	y=eigVecs[:,-dims:].T #user defined dims
+	y=eigVecs[:,-dims:].T #user defined dims, since the order is reversed, we pick principal components from the last columns instead of the first
 	return (y)
