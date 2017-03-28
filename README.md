@@ -12,4 +12,4 @@ then performs PCA on it.
 
 Testing.py was used to run the script when the data was already downloaded.
 
-PCAproject.pdf includes the plots.
+PCAproject.pdf includes the plots and discussion.
