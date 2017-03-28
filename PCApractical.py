@@ -11,6 +11,7 @@ os.system('gunzip GDS6248.soft.gz')
 os.system('tail -n +141 GDS6248.soft > GDS6248.softer') #getting rid of the redundant lines
 os.system('rm GDS6248.soft')
 os.system('head -n -1 GDS6248.softer > GDS6248.soft') 
+os.system('rm GDS6248.softer')
 
 temp = []
 with open('GDS6248.soft') as f:
