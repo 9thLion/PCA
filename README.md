@@ -1,5 +1,8 @@
 # PCA
-PCApackage includes all the PCA functions
+PCApackage includes variants of principal component analysis implemented in python 3 from scratch
+
+
+=======================================================================================
 
 All the other python scripts import from PCApackage
 
