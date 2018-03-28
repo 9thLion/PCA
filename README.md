@@ -1,8 +1,10 @@
 # PCA
+
+3 variants of Principal Component Analysis implemented from scratch using numpy. This project was implemented for educational purposes.
+
+# Details
+
 PCApackage includes variants of principal component analysis implemented in python 3 from scratch
-
-
-=======================================================================================
 
 All the other python scripts import from PCApackage
 
